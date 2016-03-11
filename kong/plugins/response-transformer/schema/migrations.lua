@@ -1,10 +1,10 @@
 local Migrations = {
   {
-    name = "2016-03-10-161400_request-transformer-config",
+    name = "2016-03-10-161400_response-transformer-config",
     up = function(options, dao_factory)
-      local schema = require "kong.plugins.request-transformer.schema"
+      local schema = require "kong.plugins.response-transformer.schema"
 
-      local plugins, err = dao_factory.plugins:find_by_keys {name = "request-transformer"}
+      local plugins, err = dao_factory.plugins:find_by_keys {name = "response-transformer"}
       if err then
         return err
       end
@@ -16,7 +16,7 @@ local Migrations = {
             plugin.config[action] = {}
           end
 
-          for _, location in ipairs {"body", "headers", "querystring"} do
+          for _, location in ipairs {"json", "headers"} do
             plugin.config[action][location] = plugin.config[action][location] or {}
           end
 
@@ -32,7 +32,7 @@ local Migrations = {
       end
     end,
     down = function(options, dao_factory)
-      local plugins, err = dao_factory.plugins:find_by_keys {name = "request-transformer"}
+      local plugins, err = dao_factory.plugins:find_by_keys {name = "response-transformer"}
       if err then
         return err
       end
@@ -40,12 +40,6 @@ local Migrations = {
       for _, plugin in ipairs(plugins) do
         plugin.config.replace = nil
         plugin.config.append = nil
-        for _, action in ipairs {"remove", "add"} do
-          if #plugin.config[action].body > 0 then
-            plugin.config[action].form = plugin.config[action].body
-          end
-          plugin.config[action].body = nil
-        end
         local _, err = dao_factory.plugins:update(plugin, true)
         if err then
           return err
